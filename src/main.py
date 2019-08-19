@@ -54,7 +54,7 @@ class DemoTool(object):
         build_cmd = task_params["build_cmd"]
         print("[debug] build_cmd: %s" % build_cmd)
         # 查看path环境变量
-        print("path: %s" % os.environ.get("PATH"))
+        print("[debug] path: %s" % os.environ.get("PATH"))
 
         # todo: 此处实现工具逻辑,输出结果,存放到result字典中
 
