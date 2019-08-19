@@ -57,13 +57,14 @@ class DemoTool(object):
         # todo: 此处实现工具逻辑,输出结果,存放到result字典中
 
         # demo结果
+        demo_path = os.path.join(source_dir,"run.py")
         result = [
             {
-                "path": "/src/benson_test/run.py",
+                "path": demo_path,
                 'line': 2,
                 'column': 3,
                 'msg': "This is a testcase.",
-                'rule': "TestRule"
+                'rule': "new_rule_demo"
             }
         ]
 
