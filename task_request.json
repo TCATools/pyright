@@ -1,0 +1,38 @@
+{
+  "id": 373074,
+  "task_params": {
+    "rule_list": [
+      {
+        "category": 8,
+        "gid": 4388,
+        "severity": 2,
+        "tool_name": "clangwarning",
+        "name": "shorten-64-to-32"
+      },
+      {
+        "category": 8,
+        "gid": 4390,
+        "severity": 2,
+        "tool_name": "clangwarning",
+        "name": "objc-method-access"
+      }
+    ],
+    "path_filters": {
+      "exclusion": [
+        "plugin_scripts/*"
+      ],
+      "inclusion": []
+    },
+    "envs": {"XCODE_VERSION": "10.1"},
+    "pre_cmd": "pod install",
+    "build_cmd": "xcodebuild -workspace demo.xcworkspace -scheme Demo -configuration Debug -sdk iphonesimulator",
+    "incr_scan": false
+  },
+  "task_name": "clangwarning",
+  "create_time": "2019-08-19T15:46:41+08:00",
+  "execute_processes": [
+    "compile",
+    "datahandle"
+  ],
+  "task_dir": "/src/codedog/data/taskdirs/task_3"
+}

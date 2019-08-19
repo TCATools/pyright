@@ -1,0 +1,80 @@
+# -*- encoding: utf8 -*-
+"""
+demo 工具
+功能: 检查 xxx 场景下的 xxx 问题
+用法: python3 main.py
+
+本地调试步骤:
+1. 构造环境变量:  export SOURCE_DIR="/src/benson_test"
+2. 按需修改task_request.json文件中各字段的内容
+3. 命令行执行  python3 main.py
+"""
+
+# 2019-08-19    bensonqin    created
+
+import os
+import json
+
+
+class DemoTool(object):
+    """demo tool"""
+    def __get_task_params(self):
+        """
+        获取需要任务参数
+        :return:
+        """
+
+        cur_dir = os.path.abspath(os.getcwd())
+        task_dir = os.path.dirname(cur_dir)
+        task_request_file = os.path.join(task_dir, 'task_request.json')
+
+        with open(task_request_file, 'r') as rf:
+            task_request = json.load(rf)
+
+        task_params = task_request["task_params"]
+
+        return task_params
+
+    def run(self):
+        """
+
+        :return:
+        """
+        # 代码目录直接从环境变量获取
+        source_dir = os.environ.get("SOURCE_DIR", None)
+        print("[debug] source_dir: %s" % source_dir)
+
+        # 其他参数从task_request.json文件获取
+        task_params = self.__get_task_params()
+        # 环境变量
+        envs = task_params["envs"]
+        print("[debug] envs: %s" % envs)
+        # 前置命令
+        pre_cmd = task_params["pre_cmd"]
+        print("[debug] pre_cmd: %s" % pre_cmd)
+        # 编译命令
+        build_cmd = task_params["build_cmd"]
+        print("[debug] build_cmd: %s" % build_cmd)
+
+        # todo: 此处实现工具逻辑,输出结果,存放到result字典中
+
+        # demo结果
+        result = [
+            {
+                "path": "/src/benson_test/run.py",
+                'line': 2,
+                'column': 3,
+                'msg': "This is a testcase.",
+                'rule': "TestRule"
+            }
+        ]
+
+        # 输出结果到指定的json文件
+        with open("result.json", "w") as fp:
+            json.dump(result, fp, indent=2)
+
+
+if __name__=='__main__':
+    print("-- start run tool ...")
+    DemoTool().run()
+    print("-- end ...")
