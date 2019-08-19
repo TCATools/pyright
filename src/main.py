@@ -6,8 +6,9 @@ demo 工具
 
 本地调试步骤:
 1. 构造环境变量:  export SOURCE_DIR="/src/benson_test"
-2. 按需修改task_request.json文件中各字段的内容
-3. 命令行执行  python3 main.py
+2. 构造参数文件环境变量: export TASK_REQUEST="xxxx/task_request.json"
+3. 按需修改task_request.json文件中各字段的内容
+4. 命令行cd到项目根目录,执行命令:  python3 src/main.py
 """
 
 # 2019-08-19    bensonqin    created
@@ -23,10 +24,7 @@ class DemoTool(object):
         获取需要任务参数
         :return:
         """
-
-        cur_dir = os.path.abspath(os.getcwd())
-        task_dir = os.path.dirname(cur_dir)
-        task_request_file = os.path.join(task_dir, 'task_request.json')
+        task_request_file = os.environ.get("TASK_REQUEST")
 
         with open(task_request_file, 'r') as rf:
             task_request = json.load(rf)
