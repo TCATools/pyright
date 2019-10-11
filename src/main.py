@@ -15,6 +15,7 @@ demo 工具
 
 import os
 import json
+import subprocess
 
 
 class DemoTool(object):
@@ -55,6 +56,10 @@ class DemoTool(object):
         print("[debug] build_cmd: %s" % build_cmd)
         # 查看path环境变量
         print("[debug] path: %s" % os.environ.get("PATH"))
+        # 查看path环境变量
+        print("[debug] 查看python version")
+        sp = subprocess.Popen(["python", "--version"])
+        sp.wait()
 
         # todo: 此处实现工具逻辑,输出结果,存放到result字典中
 
