@@ -60,6 +60,9 @@ class DemoTool(object):
         print("[debug] 查看python version")
         sp = subprocess.Popen(["python", "--version"])
         sp.wait()
+        print("[debug] 查看gradle version")
+        sp = subprocess.Popen(["gradle", "--version"])
+        sp.wait()
 
         # todo: 此处实现工具逻辑,输出结果,存放到result字典中
 
