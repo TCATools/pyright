@@ -71,10 +71,24 @@ class DemoTool(object):
         result = [
             {
                 "path": demo_path,
-                'line': 2,
+                'line': 5,
                 'column': 3,
                 'msg': "This is a testcase.",
-                'rule': "new_rule_demo"
+                'rule': "new_rule_demo",
+                "refs":[
+                    {
+                        "line": 1,
+                        "msg": "first ref msg",
+                        "tag": "first_tag",
+                        "path": demo_path
+                    },
+                    {
+                        "line": 3,
+                        "msg": "second ref msg",
+                        "tag": "second_tag",
+                        "path": demo_path
+                    }
+                ]
             }
         ]
 
