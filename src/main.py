@@ -74,7 +74,7 @@ class DemoTool(object):
                 'line': 5,
                 'column': 3,
                 'msg': "This is a testcase.",
-                'rule': "new_rule_demo",
+                'rule': "DemoRule",
                 "refs":[
                     {
                         "line": 1,
