@@ -34,6 +34,24 @@ class DemoTool(object):
 
         return task_params
 
+    def __get_dir_files(self, root_dir, want_suffix=""):
+        """
+        在指定的目录下,递归获取符合后缀名要求的所有文件
+        :param root_dir:
+        :param want_suffix:
+                    str|tuple,文件后缀名.单个直接传,比如 ".py";多个以元组形式,比如 (".h", ".c", ".cpp")
+                    默认为空字符串,会匹配所有文件
+        :return: list, 文件路径列表
+        """
+        files = set()
+        for dirpath, dirs, filenames in os.walk(root_dir):
+            for f in filenames:
+                if f.lower().endswith(want_suffix):
+                    fullpath = os.path.join(dirpath, f)
+                    files.add(fullpath)
+        files = list(files)
+        return files
+
     def run(self):
         """
 
@@ -63,6 +81,22 @@ class DemoTool(object):
         # print("[debug] 查看gradle version")
         # sp = subprocess.Popen(["gradle", "--version"])
         # sp.wait()
+
+        # ------------------------------------------------------------------ #
+        # 增量扫描时,可以通过环境变量获取到diff文件列表,只扫描diff文件,减少耗时
+        # 此处获取到的diff文件列表,已经根据项目配置的过滤路径过滤
+        # ------------------------------------------------------------------ #
+        # 需要扫描的文件后缀名
+        want_suffix = (".h", ".m", ".mm")
+        # 从 DIFF_FILES 环境变量中获取增量文件列表存放的文件(全量扫描时没有这个环境变量)
+        diff_file_json = os.environ.get("DIFF_FILES")
+        if diff_file_json:  # 如果存在 DIFF_FILES, 说明是增量扫描, 直接获取增量文件列表
+            print("get diff file: %s" % diff_file_json)
+            with open(diff_file_json, "r") as rf:
+                diff_files = json.load(rf)
+                scan_files = [path for path in diff_files if path.lower().endswith(want_suffix)]
+        else:  # 未获取到环境变量,即全量扫描,遍历source_dir获取需要扫描的文件列表
+            scan_files = self.__get_dir_files(source_dir, want_suffix)
 
         # todo: 此处实现工具逻辑,输出结果,存放到result字典中
 
