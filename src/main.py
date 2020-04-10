@@ -5,9 +5,9 @@ demo 工具
 用法: python3 main.py
 
 本地调试步骤:
-1. 构造环境变量:  export SOURCE_DIR="/src/benson_test"
-2. 按需修改task_request.json文件中各字段的内容
-3. 将task_request.json文件绝对路径添加到环境变量中: export TASK_REQUEST="xxxx/task_request.json"
+1. 添加环境变量: export SOURCE_DIR="xxx/src_dir"
+2. 添加环境变量: export TASK_REQUEST="xxx/task_request.json"
+3. 按需修改task_request.json文件中各字段的内容
 4. 命令行cd到项目根目录,执行命令:  python3 src/main.py
 """
 
