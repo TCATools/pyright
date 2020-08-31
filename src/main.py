@@ -44,7 +44,7 @@ class DemoTool(object):
         :return: list, 文件路径列表
         """
         files = set()
-        for dirpath, dirs, filenames in os.walk(root_dir):
+        for dirpath, _, filenames in os.walk(root_dir):
             for f in filenames:
                 if f.lower().endswith(want_suffix):
                     fullpath = os.path.join(dirpath, f)
@@ -99,9 +99,10 @@ class DemoTool(object):
             scan_files = self.__get_dir_files(source_dir, want_suffix)
 
         # todo: 此处实现工具逻辑,输出结果,存放到result字典中
+        print("files to scan: %s" % len(scan_files))
 
         # demo结果
-        demo_path = os.path.join(source_dir,"run.py")
+        demo_path = os.path.join(source_dir, "run.py")
         result = [
             {
                 "path": demo_path,
@@ -109,7 +110,7 @@ class DemoTool(object):
                 'column': 3,
                 'msg': "This is a testcase.",
                 'rule': "DemoRule",
-                "refs":[
+                "refs": [
                     {
                         "line": 1,
                         "msg": "first ref msg",
@@ -131,7 +132,7 @@ class DemoTool(object):
             json.dump(result, fp, indent=2)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     print("-- start run tool ...")
     DemoTool().run()
     print("-- end ...")
