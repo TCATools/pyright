@@ -26,7 +26,9 @@
     "envs": {"XCODE_VERSION": "10.1"},
     "pre_cmd": "pod install",
     "build_cmd": "xcodebuild -workspace demo.xcworkspace -scheme Demo -configuration Debug -sdk iphonesimulator",
-    "incr_scan": false
+    "incr_scan": false,
+    "scm_url": "http://git.code.oa.com/bensonqin/demo-tool.git#dev",
+    "scm_type": "git"
   },
   "task_name": "clangwarning",
   "create_time": "2019-08-19T15:46:41+08:00",
