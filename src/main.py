@@ -11,8 +11,6 @@ demo 工具
 4. 命令行cd到项目根目录,执行命令:  python3 src/main.py
 """
 
-# 2019-08-19    bensonqin    created
-
 import os
 import json
 import subprocess
