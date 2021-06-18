@@ -1,40 +1,55 @@
 {
-  "id": 373074,
+  "task_name": "DemoTool",
+  "module_name": "codelint",
   "task_params": {
+    "scan_languages": [
+      "python"
+    ],
+    "rules": [
+      "DemoRule"
+    ],
     "rule_list": [
       {
-        "category": 8,
-        "gid": 4388,
+        "name": "DemoRule",
+        "gid": 10800,
+        "pkg_id": 209,
+        "pkg_name": "profile[171]\u81ea\u5b9a\u4e49\u89c4\u5219\u5305",
+        "pkg_type": 1,
+        "tool_name": "DemoTool",
+        "category": 1,
+        "display_name": "DemoRule",
+        "rule_title": "\u53d1\u73b0demo\u95ee\u9898",
         "severity": 2,
-        "tool_name": "clangwarning",
-        "name": "shorten-64-to-32"
-      },
-      {
-        "category": 8,
-        "gid": 4390,
-        "severity": 2,
-        "tool_name": "clangwarning",
-        "name": "objc-method-access"
+        "custom": true,
+        "params": null
       }
     ],
-    "path_filters": {
-      "exclusion": [
-        "plugin_scripts/*"
-      ],
-      "inclusion": []
+    "pre_cmd": null,
+    "build_cmd": null,
+    "envs": " \nXCODE_VERSION=11.0\npython_version=3",
+    "scm_last_revision": "74825dfb813e9c59db912c677677f94f5ba8e22f",
+    "incr_scan": true,
+    "checktool": {
+      "scm_url": "http://xxx/xxx/xxx.git",
+      "run_cmd": "python src/main.py",
+      "envs": "python_version=3",
+      "display_name": "DemoTool",
+      "virtual_name": "86",
+      "show_display_name": false,
+      "build_flag": false
     },
-    "envs": {"XCODE_VERSION": "10.1"},
-    "pre_cmd": "pod install",
-    "build_cmd": "xcodebuild -workspace demo.xcworkspace -scheme Demo -configuration Debug -sdk iphonesimulator",
-    "incr_scan": false,
-    "scm_url": "http://git.code.oa.com/bensonqin/demo-tool.git#dev",
-    "scm_type": "git"
+    "path_filters": {
+      "inclusion": [],
+      "exclusion": [],
+      "re_inclusion": [],
+      "re_exclusion": []
+    },
+    "scm_url": "git@git.xxx.com:xxx/xxxx",
+    "scm_type": "git",
+    "project_id": 1309,
+    "source_dir": "/xxx/xxx",
+    "scm_revision": "fc531eb01462bca6f7d371ab036001eb22aaf9ed",
+    "task_id": 50,
   },
-  "task_name": "clangwarning",
-  "create_time": "2019-08-19T15:46:41+08:00",
-  "execute_processes": [
-    "compile",
-    "datahandle"
-  ],
-  "task_dir": "/src/codedog/data/taskdirs/task_3"
+  "task_dir": "/xxx/data/taskdirs/local_task_50"
 }
