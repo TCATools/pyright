@@ -13,12 +13,12 @@
         "name": "DemoRule",
         "gid": 10800,
         "pkg_id": 209,
-        "pkg_name": "profile[171]\u81ea\u5b9a\u4e49\u89c4\u5219\u5305",
+        "pkg_name": "demo rule package",
         "pkg_type": 1,
         "tool_name": "DemoTool",
         "category": 1,
         "display_name": "DemoRule",
-        "rule_title": "\u53d1\u73b0demo\u95ee\u9898",
+        "rule_title": "find a code problem",
         "severity": 2,
         "custom": true,
         "params": null
@@ -49,7 +49,7 @@
     "project_id": 1309,
     "source_dir": "/xxx/xxx",
     "scm_revision": "fc531eb01462bca6f7d371ab036001eb22aaf9ed",
-    "task_id": 50,
+    "task_id": 50
   },
   "task_dir": "/xxx/data/taskdirs/local_task_50"
 }

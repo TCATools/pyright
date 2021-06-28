@@ -1,0 +1,4 @@
+{
+  "check_cmd": "python src/main.py check",
+  "run_cmd": "python src/main.py scan"
+}

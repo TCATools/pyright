@@ -13,10 +13,24 @@ demo 工具
 
 import os
 import json
+import argparse
 import subprocess
 
 
 class DemoTool(object):
+    def __parse_args(self):
+        """
+        解析命令
+        :return:
+        """
+        argparser = argparse.ArgumentParser()
+        subparsers = argparser.add_subparsers(dest='command', help="Commands", required=True)
+        # 检查在当前机器环境是否可用
+        subparsers.add_parser('check', help="检查在当前机器环境是否可用")
+        # 执行代码扫描
+        subparsers.add_parser('scan', help="执行代码扫描")
+        return argparser.parse_args()
+
     """demo tool"""
     def __get_task_params(self):
         """
@@ -50,7 +64,33 @@ class DemoTool(object):
         files = list(files)
         return files
 
-    def run(self):
+    def __format_str(self, text):
+        """
+        格式化字符串
+        :param text:
+        :return:
+        """
+        text = text.strip()
+        if isinstance(text, bytes):
+            text = text.decode('utf-8')
+        return text.strip('\'\"')
+
+    def __run_cmd(self, cmd_args):
+        """
+        执行命令行
+        """
+        print("[run cmd] %s" % ' '.join(cmd_args))
+        p = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdoutput, erroutput) = p.communicate()
+        stdoutput = self.__format_str(stdoutput)
+        erroutput = self.__format_str(erroutput)
+        if stdoutput:
+            print(">> stdout: %s" % stdoutput)
+        if erroutput:
+            print(">> stderr: %s" % erroutput)
+        return stdoutput, erroutput
+
+    def __scan(self):
         """
 
         :return:
@@ -129,8 +169,36 @@ class DemoTool(object):
         with open("result.json", "w") as fp:
             json.dump(result, fp, indent=2)
 
+    def __check_usable(self):
+        """
+        检查工具在当前机器环境下是否可用
+        """
+        # 这里只是一个demo，检查python3命令是否可用，请按需修改为实际检查逻辑
+        check_cmd_args = ["python3", "--version"]
+        try:
+            stdout, stderr = self.__run_cmd(check_cmd_args)
+        except Exception as err:
+            print("tool is not usable: %s" % str(err))
+            return False
+        return True
+
+    def run(self):
+        args = self.__parse_args()
+        if args.command == "check":
+            print("check tool usable ...")
+            is_usable = self.__check_usable()
+            result_path = "check_result.json"
+            if os.path.exists(result_path):
+                os.remove(result_path)
+            with open(result_path, 'w') as fp:
+                data = {"usable": is_usable}
+                json.dump(data, fp)
+        elif args.command == "scan":
+            print("start to scan code ...")
+            self.__scan()
+        else:
+            print("[Error] need command(check, scan) ...")
+
 
 if __name__ == '__main__':
-    print("-- start run tool ...")
     DemoTool().run()
-    print("-- end ...")
