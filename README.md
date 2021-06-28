@@ -35,15 +35,8 @@
          > 说明：
          `refs`：可选，记录问题回溯路径信息。比如当前文件的回溯路径其他的3行代码，可以将这三行的路径及提示信息，按顺序添加到refs数组中。
 
-## 本地调试步骤:
+## 本地调试步骤
 
-本地调试步骤:
 1. 修改`test.sh`中的`SOURCE_DIR`环境变量为需要扫描的代码目录。
 2. 按需修改`task_request.json`文件中`task_params`字段的内容，将工具代码中用到的字段替换为实际值。
 3. 命令行`cd`到项目根目录,执行`test.sh`脚本：`bash test.sh`。
-
-## 工具配置示例：
-
-* `GIT仓库地址`: http://xxx/xxx.git
-* `执行命令`: python src/main.py scan
-* `环境变量`: python_version=3
