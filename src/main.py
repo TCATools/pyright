@@ -13,6 +13,7 @@ demo 工具
 
 import os
 import json
+import fnmatch
 import argparse
 import subprocess
 
@@ -90,10 +91,53 @@ class DemoTool(object):
             print(">> stderr: %s" % erroutput)
         return stdoutput, erroutput
 
+    def __convert_to_regex(self, wildcard_paths):
+        """
+        通配符转换为正则表达式
+        :param wildcard_paths:
+        :return:
+        """
+        return [fnmatch.translate(pattern) for pattern in wildcard_paths]
+
+    def __get_path_filters(self, task_params):
+        """
+        获取过滤路径（工具按需使用），支持用户配置通配符和正则表达式2种格式的过滤路径表达式，该方法会将通配符转换为正则表达式，合并使用
+        :param task_params:
+        :return: 合并后的正则表达式过滤路径格式
+        """
+        # 用户输入的原始参数
+        wildcard_include_paths = task_params["path_filters"].get("inclusion", [])
+        wildcard_exclude_paths = task_params["path_filters"].get("exclusion", [])
+        regex_include_paths = task_params["path_filters"].get("re_inclusion", [])
+        regex_exlucde_paths = task_params["path_filters"].get("re_exclusion", [])
+
+        print(">> 过滤路径原始配置：")
+        print(">> 说明：")
+        print(">> include - 只扫描指定文件, exclude - 过滤掉指定文件, 优先级: exclude > include (即：如果A文件同时匹配，会优先exclude，被过滤)")
+        print("include（通配符格式）: %s" % wildcard_include_paths)
+        print("exclude（通配符格式）: %s" % wildcard_exclude_paths)
+        print("include（正则表达式格式）: %s" % regex_include_paths)
+        print("exclude（正则表达式格式）: %s" % regex_exlucde_paths)
+
+        # 通配符转换为正则表达式
+        if wildcard_include_paths:
+            converted_include_paths = self.__convert_to_regex(wildcard_include_paths)
+            regex_include_paths.extend(converted_include_paths)
+        if wildcard_exclude_paths:
+            converted_exclude_paths = self.__convert_to_regex(wildcard_exclude_paths)
+            regex_exlucde_paths.extend(converted_exclude_paths)
+
+        print(">> 合并后过滤路径；")
+        print("include（正则表达式格式）: %s" % regex_include_paths)
+        print("exclude（正则表达式格式）: %s" % regex_exlucde_paths)
+        return {
+            "re_inclusion": regex_include_paths,
+            "re_exclusion": regex_exlucde_paths
+        }
+
     def __scan(self):
         """
-
-        :return:
+        扫码代码
         """
         # 代码目录直接从环境变量获取
         source_dir = os.environ.get("SOURCE_DIR", None)
@@ -101,7 +145,9 @@ class DemoTool(object):
 
         # 其他参数从task_request.json文件获取
         task_params = self.__get_task_params()
-        # 环境变量
+
+        # 按需获取环境变量
+        print("- * - * - * - * - * - * - * - * - * - * - * - * -* -* -* -* -* -* -")
         envs = task_params["envs"]
         print("[debug] envs: %s" % envs)
         # 前置命令
@@ -112,13 +158,14 @@ class DemoTool(object):
         print("[debug] build_cmd: %s" % build_cmd)
         # 查看path环境变量
         print("[debug] path: %s" % os.environ.get("PATH"))
-        # 查看path环境变量
+        # 查看python版本
         print("[debug] 查看python version")
         sp = subprocess.Popen(["python", "--version"])
         sp.wait()
-        # print("[debug] 查看gradle version")
-        # sp = subprocess.Popen(["gradle", "--version"])
-        # sp.wait()
+        print("- * - * - * - * - * - * - * - * - * - * - * - * -* -* -* -* -* -* -")
+        # 获取过滤路径
+        path_filters = self.__get_path_filters(task_params)
+        print("- * - * - * - * - * - * - * - * - * - * - * - * -* -* -* -* -* -* -")
 
         # ------------------------------------------------------------------ #
         # 增量扫描时,可以通过环境变量获取到diff文件列表,只扫描diff文件,减少耗时
@@ -136,10 +183,10 @@ class DemoTool(object):
         else:  # 未获取到环境变量,即全量扫描,遍历source_dir获取需要扫描的文件列表
             scan_files = self.__get_dir_files(source_dir, want_suffix)
 
-        # todo: 此处实现工具逻辑,输出结果,存放到result字典中
         print("files to scan: %s" % len(scan_files))
 
-        # demo结果
+        # todo: 此处需要自行实现工具逻辑,输出结果,存放到result列表中
+        # todo: 这里是demo结果，仅供展示，需要替换为实际结果
         demo_path = os.path.join(source_dir, "run.py")
         result = [
             {
@@ -185,7 +232,8 @@ class DemoTool(object):
     def run(self):
         args = self.__parse_args()
         if args.command == "check":
-            print("check tool usable ...")
+
+            print(">> check tool usable ...")
             is_usable = self.__check_usable()
             result_path = "check_result.json"
             if os.path.exists(result_path):
@@ -194,7 +242,7 @@ class DemoTool(object):
                 data = {"usable": is_usable}
                 json.dump(data, fp)
         elif args.command == "scan":
-            print("start to scan code ...")
+            print(">> start to scan code ...")
             self.__scan()
         else:
             print("[Error] need command(check, scan) ...")

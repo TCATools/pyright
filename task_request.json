@@ -39,10 +39,18 @@
       "build_flag": false
     },
     "path_filters": {
-      "inclusion": [],
-      "exclusion": [],
-      "re_inclusion": [],
-      "re_exclusion": []
+      "inclusion": [
+        "src/*"
+      ],
+      "exclusion": [
+        "src/test/*_test.py"
+      ],
+      "re_inclusion": [
+        "lib/.*"
+      ],
+      "re_exclusion": [
+        "lib/.*_test.py"
+      ]
     },
     "scm_url": "git@git.xxx.com:xxx/xxxx",
     "scm_type": "git",
