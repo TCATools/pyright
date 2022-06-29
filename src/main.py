@@ -168,22 +168,26 @@ class DemoTool(object):
         print("- * - * - * - * - * - * - * - * - * - * - * - * -* -* -* -* -* -* -")
 
         # ------------------------------------------------------------------ #
+        # 获取需要扫描的文件列表
+        # 此处获取到的文件列表,已经根据项目配置的过滤路径过滤
+        # 增量扫描时，从SCAN_FILES获取到的文件列表与从DIFF_FILES获取到的相同
+        # ------------------------------------------------------------------ #
+        scan_files_env = os.getenv("SCAN_FILES")
+        if scan_files_env and os.path.exists(scan_files_env):
+            with open(scan_files_env, "r") as rf:
+                scan_files = json.load(rf)
+                print("[debug] files to scan: %s" % len(scan_files))
+
+        # ------------------------------------------------------------------ #
         # 增量扫描时,可以通过环境变量获取到diff文件列表,只扫描diff文件,减少耗时
         # 此处获取到的diff文件列表,已经根据项目配置的过滤路径过滤
         # ------------------------------------------------------------------ #
-        # 需要扫描的文件后缀名
-        want_suffix = (".h", ".m", ".mm")
         # 从 DIFF_FILES 环境变量中获取增量文件列表存放的文件(全量扫描时没有这个环境变量)
-        diff_file_json = os.environ.get("DIFF_FILES")
-        if diff_file_json:  # 如果存在 DIFF_FILES, 说明是增量扫描, 直接获取增量文件列表
-            print("get diff file: %s" % diff_file_json)
-            with open(diff_file_json, "r") as rf:
+        diff_file_env = os.environ.get("DIFF_FILES")
+        if diff_file_env and os.path.exists(diff_file_env):  # 如果存在 DIFF_FILES, 说明是增量扫描, 直接获取增量文件列表
+            with open(diff_file_env, "r") as rf:
                 diff_files = json.load(rf)
-                scan_files = [path for path in diff_files if path.lower().endswith(want_suffix)]
-        else:  # 未获取到环境变量,即全量扫描,遍历source_dir获取需要扫描的文件列表
-            scan_files = self.__get_dir_files(source_dir, want_suffix)
-
-        print("files to scan: %s" % len(scan_files))
+                print("[debug] get diff files: %s" % diff_files)
 
         # todo: 此处需要自行实现工具逻辑,输出结果,存放到result列表中
         # todo: 这里是demo结果，仅供展示，需要替换为实际结果
