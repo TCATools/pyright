@@ -101,7 +101,7 @@ class DemoTool(object):
             with open(scan_files_env, "r") as rf:
                 need_scan_files = typing.cast(typing.List[str],json.load(rf))
         else:
-            need_scan_files = self.__get_dir_files(source_dir)
+            need_scan_files = self.__get_dir_files(source_dir, ".py")
         print("[pyright-debug] files to scan: %s" % len(need_scan_files))
 
         # ------------------------------------------------------------------ #
@@ -162,8 +162,8 @@ class DemoTool(object):
             result_list.append(
                 dict(
                     path=item["file"],
-                    line=item["range"]["end"]["line"],
-                    column=item["range"]["end"]["character"],
+                    line=int(item["range"]["start"]["line"]) + 1,
+                    column=int(item["range"]["start"]["character"]) + 1,
                     msg=item["message"],
                     rule=rule,
                     refs=[],
