@@ -14,24 +14,19 @@ demo 工具
 import os
 import sys
 import json
-import fnmatch
 import argparse
 import subprocess
 import typing
-from typing_extensions import Literal
-from _types import PyrightGeneralDiagnosticItem, ResultDict
 
 
 class DemoTool(object):
-    def __parse_args_get_command(self) -> Literal["check", "scan"]:
+    def __parse_args_get_command(self):
         """
         解析命令行参数
         :return:
         """
         argparser = argparse.ArgumentParser()
-        subparsers = argparser.add_subparsers(
-            dest="command", help="Commands", required=True
-        )
+        subparsers = argparser.add_subparsers(dest="command", help="Commands")
         # 检查在当前机器环境是否可用
         subparsers.add_parser("check", help="检查在当前机器环境是否可用")
         # 执行代码扫描
@@ -218,9 +213,7 @@ class DemoTool(object):
 
         # step
         # 解析分析结果，输出到result.json
-        issues_items: typing.List[
-            PyrightGeneralDiagnosticItem
-        ] = pyright_result_dict.get("generalDiagnostics", [])
+        issues_items = pyright_result_dict.get("generalDiagnostics", [])
         result_list = []
         for item in issues_items:
             rule = item.get("rule")
@@ -229,14 +222,14 @@ class DemoTool(object):
             if rule not in rules:
                 continue
             result_list.append(
-                ResultDict(
+                dict(
                     path=item["file"],
                     line=item["range"]["start"]["line"],
                     column=item["range"]["start"]["character"],
                     msg=item["message"],
                     rule=rule,
                     refs=[],
-                ).__dict__
+                )
             )
         with open("result.json", "w") as fp:
             json.dump(result_list, fp, indent=2)
