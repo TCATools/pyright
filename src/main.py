@@ -169,7 +169,7 @@ class DemoTool(object):
                     refs=[],
                 )
             )
-            return result_list
+        return result_list
             
 
     def __execute_tool_return_result(self, rules, tool_cmd: str, config_file: str, scan_files: typing.List[str]):
