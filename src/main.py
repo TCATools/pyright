@@ -56,7 +56,7 @@ class DemoTool(object):
     def __run_cmd(self, cmd_args):
         """执行命令行"""
 
-        print("[run cmd] %s" % " ".join(cmd_args))
+        print("[run cmd] %s" % " ".join(cmd_args[:3]))
         p = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdoutput, erroutput) = p.communicate()
         stdoutput = self.__format_str(stdoutput)
@@ -117,7 +117,9 @@ class DemoTool(object):
                 diff_files = json.load(rf)
                 print("[pyright-debug] get diff files: %s" % diff_files)
                 need_scan_files = diff_files
+        print(f"[pyright-debug] need scan files: {len(need_scan_files)}")
 
+        
         # step
         # 获取需要检测的规则
         rules = task_params.get("rules", [])
