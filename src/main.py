@@ -46,6 +46,7 @@ class DemoTool(object):
             task_request = json.load(rf)
 
         task_params = task_request["task_params"]
+        print(f"[pyright-info]获取到的任务参数: {task_params}")
 
         return task_params
 
@@ -107,7 +108,7 @@ class DemoTool(object):
         """
         # 代码目录直接从环境变量获取
         source_dir = os.environ.get("SOURCE_DIR", None)
-        print("[debug] source_dir: %s" % source_dir)
+        print("[pyright-debug] source_dir: %s" % source_dir)
         if not source_dir:
             return
 
@@ -117,19 +118,16 @@ class DemoTool(object):
         # 按需获取环境变量
         print("- * - * - * - * - * - * - * - * - * - * - * - * -* -* -* -* -* -* -")
         envs = task_params["envs"]
-        print("[debug] envs: %s" % envs)
+        print("[pyright-debug] envs: %s" % envs)
         # 前置命令
         pre_cmd = task_params["pre_cmd"]
-        print("[debug] pre_cmd: %s" % pre_cmd)
+        print("[pyright-debug] pre_cmd: %s" % pre_cmd)
         # 编译命令
         build_cmd = task_params["build_cmd"]
-        print("[debug] build_cmd: %s" % build_cmd)
+        print("[pyright-debug] build_cmd: %s" % build_cmd)
         # 查看path环境变量
-        print("[debug] path: %s" % os.environ.get("PATH"))
-        # 查看python版本
-        print("[debug] 查看python version")
-        sp = subprocess.Popen(["python", "--version"])
-        sp.wait()
+        print("[pyright-debug] path: %s" % os.environ.get("PATH"))
+
         print("- * - * - * - * - * - * - * - * - * - * - * - * -* -* -* -* -* -* -")
         # 获取过滤路径
         # path_filters = self.__get_path_filters(task_params)
@@ -145,7 +143,7 @@ class DemoTool(object):
         if scan_files_env and os.path.exists(scan_files_env):
             with open(scan_files_env, "r") as rf:
                 scan_files = json.load(rf)
-                print("[debug] files to scan: %s" % len(scan_files))
+                print("[pyright-debug] files to scan: %s" % len(scan_files))
 
         # ------------------------------------------------------------------ #
         # 增量扫描时,可以通过环境变量获取到diff文件列表,只扫描diff文件,减少耗时
@@ -158,7 +156,7 @@ class DemoTool(object):
         ):  # 如果存在 DIFF_FILES, 说明是增量扫描, 直接获取增量文件列表
             with open(diff_file_env, "r") as rf:
                 diff_files = json.load(rf)
-                print("[debug] get diff files: %s" % diff_files)
+                print("[pyright-debug] get diff files: %s" % diff_files)
 
         # todo: 此处需要自行实现工具逻辑,输出结果,存放到result列表中
 
@@ -197,6 +195,7 @@ class DemoTool(object):
         with open(config_file, "w") as f:
             # 写入到source_dir下的配置文件中
             f.write(json.dumps(config_dict))
+        print(f"[pyright-info]: 生成的配置内容: {config_dict}")
         # ------
 
         # step
@@ -207,7 +206,7 @@ class DemoTool(object):
             )
             pyright_result_dict = json.loads(stdout)
         except Exception as err:
-            print(f"[error]: pyright工具执行分析出错：{err}")
+            print(f"[pyright-error]: pyright工具执行分析出错：{err}")
             return
         # ------
 
@@ -260,7 +259,7 @@ class DemoTool(object):
         try:
             sys.stdout, sys.stderr = self.__run_cmd([tool_cmd, "--version"])
         except Exception as err:
-            print("tool is not usable: %s" % str(err))
+            print("[pyright-error] tool is not usable: %s" % str(err))
             return False
         return True
 
@@ -268,7 +267,7 @@ class DemoTool(object):
         command = self.__parse_args_get_command()
         if command == "check":
             # 检测工具
-            print(">> check tool usable ...")
+            print("[pyright-info] >> check tool usable ...")
             is_usable = self.__check_usable()
             result_path = "check_result.json"
             if os.path.exists(result_path):
@@ -278,10 +277,10 @@ class DemoTool(object):
                 json.dump(data, fp)
                 
         elif command == "scan":
-            print(">> start to scan code ...")
+            print("[pyright-info] >> start to scan code ...")
             self.__scan()
         else:
-            print("[Error] need command(check, scan) ...")
+            print("[pyright-error] need command(check, scan) ...")
 
 
 if __name__ == "__main__":
