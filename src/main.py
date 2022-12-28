@@ -1,30 +1,15 @@
 # -*- encoding: utf8 -*-
-"""
-demo 工具
-功能: 检查 xxx 场景下的 xxx 问题
-用法: python3 main.py
-
-本地调试步骤:
-1. 添加环境变量: export SOURCE_DIR="xxx/src_dir"
-2. 添加环境变量: export TASK_REQUEST="xxx/task_request.json"
-3. 按需修改task_request.json文件中各字段的内容
-4. 命令行cd到项目根目录,执行命令:  python3 src/main.py
-"""
 
 import os
 import sys
 import json
+import typing
 import argparse
 import subprocess
-import typing
-
 
 class DemoTool(object):
     def __parse_args_get_command(self):
-        """
-        解析命令行参数
-        :return:
-        """
+        """获取命令行参数"""
         argparser = argparse.ArgumentParser()
         subparsers = argparser.add_subparsers(dest="command", help="Commands")
         # 检查在当前机器环境是否可用
@@ -33,21 +18,14 @@ class DemoTool(object):
         subparsers.add_parser("scan", help="执行代码扫描")
         return argparser.parse_args().command
 
-    """demo tool"""
 
     def __get_task_params(self) -> typing.Dict:
-        """
-        获取需要任务参数
-        :return:
-        """
+        """获取需要任务参数"""
         task_request_file = typing.cast(str, os.environ.get("TASK_REQUEST"))
-
         with open(task_request_file, "r") as rf:
             task_request = json.load(rf)
-
         task_params = task_request["task_params"]
         print(f"[pyright-info]获取到的任务参数: {task_params}")
-
         return task_params
 
     def __get_dir_files(self, root_dir, want_suffix=""):
@@ -69,43 +47,26 @@ class DemoTool(object):
         return files
 
     def __format_str(self, text):
-        """
-        格式化字符串
-        :param text:
-        :return:
-        """
+        """格式化字符串"""
         text = text.strip()
         if isinstance(text, bytes):
             text = text.decode("utf-8")
         return text.strip("'\"")
 
     def __run_cmd(self, cmd_args):
-        """
-        执行命令行
-        """
+        """执行命令行"""
+
         print("[run cmd] %s" % " ".join(cmd_args))
         p = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdoutput, erroutput) = p.communicate()
         stdoutput = self.__format_str(stdoutput)
         erroutput = self.__format_str(erroutput)
         if erroutput:
-            print(">> stderr: %s" % erroutput)
+            print("[pyright-error] >> stderr: %s" % erroutput)
         return stdoutput, erroutput
 
-    def __get_include_exclude_paths(self, task_params) -> typing.Tuple[list, list]:
-        wildcard_include_paths = task_params["path_filters"].get("inclusion", [])
-        wildcard_exclude_paths = task_params["path_filters"].get("exclusion", [])
-        regex_include_paths = task_params["path_filters"].get("re_inclusion", [])
-        regex_exlucde_paths = task_params["path_filters"].get("re_exclusion", [])
-        return (
-            wildcard_exclude_paths + regex_exlucde_paths,
-            wildcard_include_paths + regex_include_paths,
-        )
-
     def __scan(self):
-        """
-        扫码代码
-        """
+        """扫描入口"""
         # 代码目录直接从环境变量获取
         source_dir = os.environ.get("SOURCE_DIR", None)
         print("[pyright-debug] source_dir: %s" % source_dir)
@@ -129,10 +90,6 @@ class DemoTool(object):
         print("[pyright-debug] path: %s" % os.environ.get("PATH"))
 
         print("- * - * - * - * - * - * - * - * - * - * - * - * -* -* -* -* -* -* -")
-        # 获取过滤路径
-        # path_filters = self.__get_path_filters(task_params)
-        path_filters = self.__get_include_exclude_paths(task_params)
-        print("- * - * - * - * - * - * - * - * - * - * - * - * -* -* -* -* -* -* -")
 
         # ------------------------------------------------------------------ #
         # 获取需要扫描的文件列表
@@ -142,8 +99,10 @@ class DemoTool(object):
         scan_files_env = os.getenv("SCAN_FILES")
         if scan_files_env and os.path.exists(scan_files_env):
             with open(scan_files_env, "r") as rf:
-                scan_files = json.load(rf)
-                print("[pyright-debug] files to scan: %s" % len(scan_files))
+                need_scan_files = typing.cast(typing.List[str],json.load(rf))
+        else:
+            need_scan_files = self.__get_dir_files(source_dir)
+        print("[pyright-debug] files to scan: %s" % len(need_scan_files))
 
         # ------------------------------------------------------------------ #
         # 增量扫描时,可以通过环境变量获取到diff文件列表,只扫描diff文件,减少耗时
@@ -157,8 +116,7 @@ class DemoTool(object):
             with open(diff_file_env, "r") as rf:
                 diff_files = json.load(rf)
                 print("[pyright-debug] get diff files: %s" % diff_files)
-
-        # todo: 此处需要自行实现工具逻辑,输出结果,存放到result列表中
+                need_scan_files = diff_files
 
         # step
         # 获取需要检测的规则
@@ -171,7 +129,62 @@ class DemoTool(object):
         # ------
 
         # step
-        # 构造分析配置文件
+        # 构造配置文件
+        config_file = self.__gen_config_file(source_dir, rules)
+        # ------
+
+        # step
+        # 调用工具执行分析
+        self.__execute_tool_return_result(rules, tool_cmd, config_file, need_scan_files)
+        # ------
+
+        # step
+        self.__final_step(config_file)
+        # ------
+    
+
+    def __final_step(self, config_file):
+        if os.path.exists(config_file):
+            os.remove(config_file)
+        return
+        
+    def __format_result_dict(self, result_dict: typing.Dict[typing.Any, typing.Any], rules: typing.List[str]):
+        issues_items = result_dict.get("generalDiagnostics", [])
+        result_list = []
+        for item in issues_items:
+            rule = item.get("rule")
+            if not rule:
+                continue
+            if rule not in rules:
+                continue
+            result_list.append(
+                dict(
+                    path=item["file"],
+                    line=item["range"]["end"]["line"],
+                    column=item["range"]["end"]["character"],
+                    msg=item["message"],
+                    rule=rule,
+                    refs=[],
+                )
+            )
+            return result_list
+            
+
+    def __execute_tool_return_result(self, rules, tool_cmd: str, config_file: str, scan_files: typing.List[str]):
+        with open("result.json", "w") as fp:
+            try:
+                stdout, _ = self.__run_cmd(
+                    [tool_cmd, "-p", config_file, *scan_files, "--outputjson"]
+                )
+                result_dict = json.loads(stdout)
+            except Exception as err:
+                print(f"[pyright-error]: pyright工具执行分析出错：{err}")
+                result_dict = {}
+            result_list = self.__format_result_dict(result_dict, rules)
+            json.dump(result_list, fp, indent=2)
+
+
+    def __gen_config_file(self, source_dir: str, rules: typing.List[str]) -> str:
         rule_name_prefix = "report"
         example_config_file = os.path.join(os.getcwd(), "config", "pyrightconfig.json")
         with open(example_config_file, "r") as f:
@@ -184,8 +197,6 @@ class DemoTool(object):
                     continue
                 if rule_name not in rules:
                     config_dict[rule_name] = "none"
-            # 路径排除
-            config_dict["exclude"], config_dict["include"] = path_filters
 
             # 指定待分析项目所使用的python版本
             if os.environ.get("PYRIGHT_PYTHONVERSION"):
@@ -196,48 +207,10 @@ class DemoTool(object):
             # 写入到source_dir下的配置文件中
             f.write(json.dumps(config_dict))
         print(f"[pyright-info]: 生成的配置内容: {config_dict}")
-        # ------
-
-        # step
-        # 调用工具执行分析
-        try:
-            stdout, _ = self.__run_cmd(
-                [tool_cmd, "-p", config_file, "--outputjson", source_dir]
-            )
-            pyright_result_dict = json.loads(stdout)
-        except Exception as err:
-            print(f"[pyright-error]: pyright工具执行分析出错：{err}")
-            return
-        # ------
-
-        # step
-        # 解析分析结果，输出到result.json
-        issues_items = pyright_result_dict.get("generalDiagnostics", [])
-        result_list = []
-        for item in issues_items:
-            rule = item.get("rule")
-            if not rule:
-                continue
-            if rule not in rules:
-                continue
-            result_list.append(
-                dict(
-                    path=item["file"],
-                    line=item["range"]["start"]["line"],
-                    column=item["range"]["start"]["character"],
-                    msg=item["message"],
-                    rule=rule,
-                    refs=[],
-                )
-            )
-        with open("result.json", "w") as fp:
-            json.dump(result_list, fp, indent=2)
-        # ------
+        return config_file
 
     def __get_tool_cmd(self) -> str:
-        """
-        执行
-        """
+        """根据系统类型获取工具路径"""
         platform = sys.platform
         _gen_cmd = lambda file_name: os.path.join(os.getcwd(), "bin", file_name)
         tool_path = ""
@@ -250,9 +223,7 @@ class DemoTool(object):
         return tool_path
 
     def __check_usable(self) -> bool:
-        """
-        检查工具在当前机器环境下是否可用
-        """
+        """检查工具是否可以正确使用"""
         tool_cmd = self.__get_tool_cmd()
         if not tool_cmd:
             return False
@@ -266,7 +237,7 @@ class DemoTool(object):
     def run(self):
         command = self.__parse_args_get_command()
         if command == "check":
-            # 检测工具
+            # 检查工具是否可用
             print("[pyright-info] >> check tool usable ...")
             is_usable = self.__check_usable()
             result_path = "check_result.json"
@@ -275,8 +246,8 @@ class DemoTool(object):
             with open(result_path, "w") as fp:
                 data = {"usable": is_usable}
                 json.dump(data, fp)
-                
         elif command == "scan":
+            # 执行扫描分析任务
             print("[pyright-info] >> start to scan code ...")
             self.__scan()
         else:
