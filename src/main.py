@@ -12,35 +12,42 @@ demo 工具
 """
 
 import os
+import sys
 import json
 import fnmatch
 import argparse
 import subprocess
+import typing
+from typing_extensions import Literal
+from _types import PyrightGeneralDiagnosticItem, ResultDict
 
 
 class DemoTool(object):
-    def __parse_args(self):
+    def __parse_args_get_command(self) -> Literal["check", "scan"]:
         """
-        解析命令
+        解析命令行参数
         :return:
         """
         argparser = argparse.ArgumentParser()
-        subparsers = argparser.add_subparsers(dest='command', help="Commands", required=True)
+        subparsers = argparser.add_subparsers(
+            dest="command", help="Commands", required=True
+        )
         # 检查在当前机器环境是否可用
-        subparsers.add_parser('check', help="检查在当前机器环境是否可用")
+        subparsers.add_parser("check", help="检查在当前机器环境是否可用")
         # 执行代码扫描
-        subparsers.add_parser('scan', help="执行代码扫描")
-        return argparser.parse_args()
+        subparsers.add_parser("scan", help="执行代码扫描")
+        return argparser.parse_args().command
 
     """demo tool"""
-    def __get_task_params(self):
+
+    def __get_task_params(self) -> typing.Dict:
         """
         获取需要任务参数
         :return:
         """
-        task_request_file = os.environ.get("TASK_REQUEST")
+        task_request_file = typing.cast(str, os.environ.get("TASK_REQUEST"))
 
-        with open(task_request_file, 'r') as rf:
+        with open(task_request_file, "r") as rf:
             task_request = json.load(rf)
 
         task_params = task_request["task_params"]
@@ -73,67 +80,31 @@ class DemoTool(object):
         """
         text = text.strip()
         if isinstance(text, bytes):
-            text = text.decode('utf-8')
-        return text.strip('\'\"')
+            text = text.decode("utf-8")
+        return text.strip("'\"")
 
     def __run_cmd(self, cmd_args):
         """
         执行命令行
         """
-        print("[run cmd] %s" % ' '.join(cmd_args))
+        print("[run cmd] %s" % " ".join(cmd_args))
         p = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdoutput, erroutput) = p.communicate()
         stdoutput = self.__format_str(stdoutput)
         erroutput = self.__format_str(erroutput)
-        if stdoutput:
-            print(">> stdout: %s" % stdoutput)
         if erroutput:
             print(">> stderr: %s" % erroutput)
         return stdoutput, erroutput
 
-    def __convert_to_regex(self, wildcard_paths):
-        """
-        通配符转换为正则表达式
-        :param wildcard_paths:
-        :return:
-        """
-        return [fnmatch.translate(pattern) for pattern in wildcard_paths]
-
-    def __get_path_filters(self, task_params):
-        """
-        获取过滤路径（工具按需使用），支持用户配置通配符和正则表达式2种格式的过滤路径表达式，该方法会将通配符转换为正则表达式，合并使用
-        :param task_params:
-        :return: 合并后的正则表达式过滤路径格式
-        """
-        # 用户输入的原始参数
+    def __get_include_exclude_paths(self, task_params) -> typing.Tuple[list, list]:
         wildcard_include_paths = task_params["path_filters"].get("inclusion", [])
         wildcard_exclude_paths = task_params["path_filters"].get("exclusion", [])
         regex_include_paths = task_params["path_filters"].get("re_inclusion", [])
         regex_exlucde_paths = task_params["path_filters"].get("re_exclusion", [])
-
-        print(">> 过滤路径原始配置：")
-        print(">> 说明：")
-        print(">> include - 只扫描指定文件, exclude - 过滤掉指定文件, 优先级: exclude > include (即：如果A文件同时匹配，会优先exclude，被过滤)")
-        print("include（通配符格式）: %s" % wildcard_include_paths)
-        print("exclude（通配符格式）: %s" % wildcard_exclude_paths)
-        print("include（正则表达式格式）: %s" % regex_include_paths)
-        print("exclude（正则表达式格式）: %s" % regex_exlucde_paths)
-
-        # 通配符转换为正则表达式
-        if wildcard_include_paths:
-            converted_include_paths = self.__convert_to_regex(wildcard_include_paths)
-            regex_include_paths.extend(converted_include_paths)
-        if wildcard_exclude_paths:
-            converted_exclude_paths = self.__convert_to_regex(wildcard_exclude_paths)
-            regex_exlucde_paths.extend(converted_exclude_paths)
-
-        print(">> 合并后过滤路径；")
-        print("include（正则表达式格式）: %s" % regex_include_paths)
-        print("exclude（正则表达式格式）: %s" % regex_exlucde_paths)
-        return {
-            "re_inclusion": regex_include_paths,
-            "re_exclusion": regex_exlucde_paths
-        }
+        return (
+            wildcard_exclude_paths + regex_exlucde_paths,
+            wildcard_include_paths + regex_include_paths,
+        )
 
     def __scan(self):
         """
@@ -142,6 +113,8 @@ class DemoTool(object):
         # 代码目录直接从环境变量获取
         source_dir = os.environ.get("SOURCE_DIR", None)
         print("[debug] source_dir: %s" % source_dir)
+        if not source_dir:
+            return
 
         # 其他参数从task_request.json文件获取
         task_params = self.__get_task_params()
@@ -164,7 +137,8 @@ class DemoTool(object):
         sp.wait()
         print("- * - * - * - * - * - * - * - * - * - * - * - * -* -* -* -* -* -* -")
         # 获取过滤路径
-        path_filters = self.__get_path_filters(task_params)
+        # path_filters = self.__get_path_filters(task_params)
+        path_filters = self.__get_include_exclude_paths(task_params)
         print("- * - * - * - * - * - * - * - * - * - * - * - * -* -* -* -* -* -* -")
 
         # ------------------------------------------------------------------ #
@@ -184,73 +158,138 @@ class DemoTool(object):
         # ------------------------------------------------------------------ #
         # 从 DIFF_FILES 环境变量中获取增量文件列表存放的文件(全量扫描时没有这个环境变量)
         diff_file_env = os.environ.get("DIFF_FILES")
-        if diff_file_env and os.path.exists(diff_file_env):  # 如果存在 DIFF_FILES, 说明是增量扫描, 直接获取增量文件列表
+        if diff_file_env and os.path.exists(
+            diff_file_env
+        ):  # 如果存在 DIFF_FILES, 说明是增量扫描, 直接获取增量文件列表
             with open(diff_file_env, "r") as rf:
                 diff_files = json.load(rf)
                 print("[debug] get diff files: %s" % diff_files)
 
         # todo: 此处需要自行实现工具逻辑,输出结果,存放到result列表中
-        # todo: 这里是demo结果，仅供展示，需要替换为实际结果
-        demo_path = os.path.join(source_dir, "run.py")
-        result = [
-            {
-                "path": demo_path,
-                'line': 5,
-                'column': 3,
-                'msg': "This is a testcase.",
-                'rule': "DemoRule",
-                "refs": [
-                    {
-                        "line": 1,
-                        "msg": "first ref msg",
-                        "tag": "first_tag",
-                        "path": demo_path
-                    },
-                    {
-                        "line": 3,
-                        "msg": "second ref msg",
-                        "tag": "second_tag",
-                        "path": demo_path
-                    }
-                ]
-            }
-        ]
 
-        # 输出结果到指定的json文件
+        # step
+        # 获取需要检测的规则
+        rules = task_params.get("rules", [])
+        # ------
+
+        # step
+        # 获取可执行工具路径
+        tool_cmd = self.__get_tool_cmd()
+        # ------
+
+        # step
+        # 构造分析配置文件
+        rule_name_prefix = "report"
+        example_config_file = os.path.join(os.getcwd(), "config", "pyrightconfig.json")
+        with open(example_config_file, "r") as f:
+            config_dict: typing.Dict[str, typing.Union[list, str]] = json.loads(
+                f.read()
+            )
+            # 启用规则，关闭未选用的规则
+            for rule_name in config_dict.keys():
+                if not rule_name.startswith(rule_name_prefix):
+                    continue
+                if rule_name not in rules:
+                    config_dict[rule_name] = "none"
+            # 路径排除
+            config_dict["exclude"], config_dict["include"] = path_filters
+
+            # 指定待分析项目所使用的python版本
+            if os.environ.get("PYRIGHT_PYTHONVERSION"):
+                config_dict["pythonVersion"] = os.environ["PYRIGHT_PYTHONVERSION"]
+
+        config_file = os.path.join(source_dir, "toolpyrightconfig.json")
+        with open(config_file, "w") as f:
+            # 写入到source_dir下的配置文件中
+            f.write(json.dumps(config_dict))
+        # ------
+
+        # step
+        # 调用工具执行分析
+        try:
+            stdout, _ = self.__run_cmd(
+                [tool_cmd, "-p", config_file, "--outputjson", source_dir]
+            )
+            pyright_result_dict = json.loads(stdout)
+        except Exception as err:
+            print(f"[error]: pyright工具执行分析出错：{err}")
+            return
+        # ------
+
+        # step
+        # 解析分析结果，输出到result.json
+        issues_items: typing.List[
+            PyrightGeneralDiagnosticItem
+        ] = pyright_result_dict.get("generalDiagnostics", [])
+        result_list = []
+        for item in issues_items:
+            rule = item.get("rule")
+            if not rule:
+                continue
+            if rule not in rules:
+                continue
+            result_list.append(
+                ResultDict(
+                    path=item["file"],
+                    line=item["range"]["start"]["line"],
+                    column=item["range"]["start"]["character"],
+                    msg=item["message"],
+                    rule=rule,
+                    refs=[],
+                ).__dict__
+            )
         with open("result.json", "w") as fp:
-            json.dump(result, fp, indent=2)
+            json.dump(result_list, fp, indent=2)
+        # ------
 
-    def __check_usable(self):
+    def __get_tool_cmd(self) -> str:
+        """
+        执行
+        """
+        platform = sys.platform
+        _gen_cmd = lambda file_name: os.path.join(os.getcwd(), "bin", file_name)
+        tool_path = ""
+        if platform == "win32":
+            tool_path = _gen_cmd("pyright-win.exe")
+        elif platform == "darwin":
+            tool_path = _gen_cmd("pyright-mac")
+        elif platform == "linux" or platform == "linux2":
+            tool_path = _gen_cmd("pyright-linux")
+        return tool_path
+
+    def __check_usable(self) -> bool:
         """
         检查工具在当前机器环境下是否可用
         """
-        # 这里只是一个demo，检查python3命令是否可用，请按需修改为实际检查逻辑
-        check_cmd_args = ["python3", "--version"]
+        tool_cmd = self.__get_tool_cmd()
+        if not tool_cmd:
+            return False
         try:
-            stdout, stderr = self.__run_cmd(check_cmd_args)
+            sys.stdout, sys.stderr = self.__run_cmd([tool_cmd, "--version"])
         except Exception as err:
             print("tool is not usable: %s" % str(err))
             return False
         return True
 
     def run(self):
-        args = self.__parse_args()
-        if args.command == "check":
-
+        command = self.__parse_args_get_command()
+        if command == "check":
+            # 检测工具
             print(">> check tool usable ...")
             is_usable = self.__check_usable()
             result_path = "check_result.json"
             if os.path.exists(result_path):
                 os.remove(result_path)
-            with open(result_path, 'w') as fp:
+            with open(result_path, "w") as fp:
                 data = {"usable": is_usable}
                 json.dump(data, fp)
-        elif args.command == "scan":
+                
+        elif command == "scan":
             print(">> start to scan code ...")
             self.__scan()
         else:
             print("[Error] need command(check, scan) ...")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     DemoTool().run()

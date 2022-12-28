@@ -1,0 +1,4 @@
+result.json
+check_result.json
+*.pyc
+.vscode/*

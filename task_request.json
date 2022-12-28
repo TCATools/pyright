@@ -6,18 +6,18 @@
       "python"
     ],
     "rules": [
-      "DemoRule"
+      "reportGeneralTypeIssues"
     ],
     "rule_list": [
       {
-        "name": "DemoRule",
+        "name": "reportGeneralTypeIssues",
         "gid": 10800,
         "pkg_id": 209,
         "pkg_name": "demo rule package",
         "pkg_type": 1,
-        "tool_name": "DemoTool",
+        "tool_name": "reportGeneralTypeIssues",
         "category": 1,
-        "display_name": "DemoRule",
+        "display_name": "reportGeneralTypeIssues",
         "rule_title": "find a code problem",
         "severity": 2,
         "custom": true,
@@ -26,7 +26,7 @@
     ],
     "pre_cmd": null,
     "build_cmd": null,
-    "envs": " \nXCODE_VERSION=11.0\npython_version=3",
+    "envs": " \nXCODE_VERSION=11.0\npython_version=3\nPYRIGHT_PYTHONVERSION=3.8",
     "scm_last_revision": "74825dfb813e9c59db912c677677f94f5ba8e22f",
     "incr_scan": true,
     "checktool": {
@@ -43,7 +43,8 @@
         "src/*"
       ],
       "exclusion": [
-        "src/test/*_test.py"
+        "src/test/*_test.py",
+        "stubs/*"
       ],
       "re_inclusion": [
         "lib/.*"
