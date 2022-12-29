@@ -117,6 +117,10 @@ class DemoTool(object):
                 diff_files = json.load(rf)
                 print("[pyright-debug] get diff files: %s" % diff_files)
                 need_scan_files = diff_files
+
+        # step 
+        # 只需要扫描后缀为 .py 的文件
+        need_scan_files = [scan_file for scan_file in need_scan_files if scan_file.endswith(".py")]            
         print(f"[pyright-debug] need scan files: {len(need_scan_files)}")
 
         
