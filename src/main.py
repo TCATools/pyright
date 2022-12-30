@@ -177,7 +177,8 @@ class DemoTool(object):
             
 
     def __execute_tool_return_result(self, rules, tool_cmd: str, config_file: str, scan_files: typing.List[str]):
-        with open("result.json", "w") as fp:
+        result_file_path = os.path.join(os.environ.get("RESULT_DIR", ""), "result.json")
+        with open(result_file_path, "w") as fp:
             try:
                 stdout, _ = self.__run_cmd(
                     [tool_cmd, "-p", config_file, *scan_files, "--outputjson"]
