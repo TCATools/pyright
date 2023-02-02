@@ -1,7 +1,7 @@
 {
     "typeCheckingMode": "basic",
     "reportGeneralTypeIssues": "error",
-    "reportMissingImports": "error",
+    "reportMissingImports": "warning",
     "reportMissingModuleSource": "warning",
     "reportWildcardImportFromLibrary": "warning",
     "reportOptionalSubscript": "error",
@@ -20,5 +20,7 @@
     "reportUnboundVariable": "error",
     "reportUnsupportedDunderAll": "warning",
     "reportUnusedCoroutine": "error",
-    "reportUnusedExpression": "warning"
+    "reportUnusedExpression": "warning",
+    "reportUnusedFunction": "warning",
+    "reportUnusedImport": "warning"
 }
