@@ -206,8 +206,10 @@ class DemoTool(object):
                     config_dict[rule_name] = "none"
 
             # 指定待分析项目所使用的python版本
-            if os.environ.get("PYRIGHT_PYTHONVERSION"):
-                config_dict["pythonVersion"] = os.environ["PYRIGHT_PYTHONVERSION"]
+            config_dict["pythonVersion"] = self.pyright_python_version
+
+            # 指定stubs目录
+            config_dict["stubPath"] = self.pyright_stubs_path
 
         config_file = os.path.join(source_dir, "toolpyrightconfig.json")
         with open(config_file, "w") as f:
@@ -240,6 +242,31 @@ class DemoTool(object):
             print("[pyright-error] tool is not usable: %s" % str(err))
             return False
         return True
+    
+    def __check_pyright_env(self):
+        """ 执行扫描前检查pyright所需的环境变量 """
+        pyright_stubs_path = os.getenv("pyright_stubs_path", None)
+
+        need_envs = ["pyright_stubs_path", "pyright_python_version"]
+
+        print(f"[pyright-check-envs] 检查pyright所需的环境变量是否设置:{','.join(need_envs)} ")
+        
+        if not pyright_stubs_path:
+            raise Exception("""
+                pyright工具需要提供项目stubs文件所在的目录, 请在环境变量中配置 pyright_stubs_path 的值，
+                例如项目目录下的stubs目录存放所有存根文件，那么请在环境变量中设置 pyright_stubs_path=stubs
+            """)
+        self.pyright_stubs_path = pyright_stubs_path
+
+        pyright_python_version = os.getenv("pyright_python_version", None)
+        if not pyright_python_version:
+            raise Exception("""
+                pyright工具需要提供项目所使用的python版本,
+                否则pyright无法判断不同python版本的特性，有出现误报的可能
+                请在环境变量中配置 pyright_python_version 的值，
+                如果使用的是python3.8版本，那么请在环境变量中设置 pyright_python_version=3.8
+            """)
+        self.pyright_python_version = pyright_python_version
 
     def run(self):
         command = self.__parse_args_get_command()
@@ -256,6 +283,7 @@ class DemoTool(object):
         elif command == "scan":
             # 执行扫描分析任务
             print("[pyright-info] >> start to scan code ...")
+            self.__check_pyright_env()
             self.__scan()
         else:
             print("[pyright-error] need command(check, scan) ...")
