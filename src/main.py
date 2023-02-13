@@ -220,7 +220,7 @@ class DemoTool(object):
                 if not has_stubs:
                     # 不提供stubs时，排除一些规则，防止误报
                     if rule_name in MISS_STUBS_IGNORE_RULES:
-                        continue
+                        config_dict[rule_name] = "none"
                 if rule_name not in rules:
                     config_dict[rule_name] = "none"
 
