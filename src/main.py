@@ -7,6 +7,12 @@ import typing
 import argparse
 import subprocess
 
+# 如果没有提供stubs，默认忽略下面的问题
+MISS_STUBS_IGNORE_RULES = [
+    "reportMissingImports",
+    "reportGeneralTypeIssues"
+]
+
 class DemoTool(object):
     def __parse_args_get_command(self):
         """获取命令行参数"""
@@ -17,7 +23,6 @@ class DemoTool(object):
         # 执行代码扫描
         subparsers.add_parser("scan", help="执行代码扫描")
         return argparser.parse_args().command
-
 
     def __get_task_params(self) -> typing.Dict:
         """获取需要任务参数"""
@@ -57,7 +62,8 @@ class DemoTool(object):
         """执行命令行"""
 
         print("[run cmd] %s" % " ".join(cmd_args[:3]))
-        p = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(
+            cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdoutput, erroutput) = p.communicate()
         stdoutput = self.__format_str(stdoutput)
         erroutput = self.__format_str(erroutput)
@@ -99,7 +105,7 @@ class DemoTool(object):
         scan_files_env = os.getenv("SCAN_FILES")
         if scan_files_env and os.path.exists(scan_files_env):
             with open(scan_files_env, "r") as rf:
-                need_scan_files = typing.cast(typing.List[str],json.load(rf))
+                need_scan_files = typing.cast(typing.List[str], json.load(rf))
         else:
             need_scan_files = self.__get_dir_files(source_dir, ".py")
         print("[pyright-debug] files to scan: %s" % len(need_scan_files))
@@ -118,12 +124,12 @@ class DemoTool(object):
                 print("[pyright-debug] get diff files: %s" % diff_files)
                 need_scan_files = diff_files
 
-        # step 
+        # step
         # 只需要扫描后缀为 .py 的文件
-        need_scan_files = [scan_file for scan_file in need_scan_files if scan_file.endswith(".py")]            
+        need_scan_files = [
+            scan_file for scan_file in need_scan_files if scan_file.endswith(".py")]
         print(f"[pyright-debug] need scan files: {len(need_scan_files)}")
 
-        
         # step
         # 获取需要检测的规则
         rules = task_params.get("rules", [])
@@ -141,19 +147,19 @@ class DemoTool(object):
 
         # step
         # 调用工具执行分析
-        self.__execute_tool_return_result(rules, tool_cmd, config_file, need_scan_files)
+        self.__execute_tool_return_result(
+            rules, tool_cmd, config_file, need_scan_files)
         # ------
 
         # step
         self.__final_step(config_file)
         # ------
     
-
     def __final_step(self, config_file):
         if os.path.exists(config_file):
             os.remove(config_file)
         return
-        
+
     def __format_result_dict(self, result_dict: typing.Dict[typing.Any, typing.Any], rules: typing.List[str]):
         issues_items = result_dict.get("generalDiagnostics", [])
         result_list = []
@@ -174,10 +180,10 @@ class DemoTool(object):
                 )
             )
         return result_list
-            
 
     def __execute_tool_return_result(self, rules, tool_cmd: str, config_file: str, scan_files: typing.List[str]):
-        result_file_path = os.path.join(os.environ.get("RESULT_DIR", ""), "result.json")
+        result_file_path = os.path.join(
+            os.environ.get("RESULT_DIR", ""), "result.json")
         with open(result_file_path, "w") as fp:
             try:
                 stdout, _ = self.__run_cmd(
@@ -190,26 +196,33 @@ class DemoTool(object):
             result_list = self.__format_result_dict(result_dict, rules)
             json.dump(result_list, fp, indent=2)
 
-
     def __gen_config_file(self, source_dir: str, rules: typing.List[str]) -> str:
         rule_name_prefix = "report"
-        example_config_file = os.path.join(os.getcwd(), "config", "pyrightconfig.json")
+        example_config_file = os.path.join(
+            os.getcwd(), "config", "pyrightconfig.json")
         with open(example_config_file, "r") as f:
             config_dict: typing.Dict[str, typing.Union[list, str]] = json.loads(
                 f.read()
             )
+            # 指定待分析项目所使用的python版本
+            config_dict["pythonVersion"] = self.pyright_python_version
+
+            has_stubs = False
+            # 指定stubs目录(可选)
+            if self.pyright_stubs_path:
+                config_dict["stubPath"] = self.pyright_stubs_path
+                has_stubs = True
+            
             # 启用规则，关闭未选用的规则
             for rule_name in config_dict.keys():
                 if not rule_name.startswith(rule_name_prefix):
                     continue
+                if not has_stubs:
+                    # 不提供stubs时，排除一些规则，防止误报
+                    if rule_name in MISS_STUBS_IGNORE_RULES:
+                        continue
                 if rule_name not in rules:
                     config_dict[rule_name] = "none"
-
-            # 指定待分析项目所使用的python版本
-            config_dict["pythonVersion"] = self.pyright_python_version
-
-            # 指定stubs目录
-            config_dict["stubPath"] = self.pyright_stubs_path
 
         config_file = os.path.join(source_dir, "toolpyrightconfig.json")
         with open(config_file, "w") as f:
@@ -219,9 +232,10 @@ class DemoTool(object):
         return config_file
 
     def __get_tool_cmd(self) -> str:
-        """根据系统类型获取工具路径"""
+        """zzz"""
         platform = sys.platform
-        _gen_cmd = lambda file_name: os.path.join(os.getcwd(), "bin", file_name)
+        def _gen_cmd(file_name): return os.path.join(
+            os.getcwd(), "bin", file_name)
         tool_path = ""
         if platform == "win32":
             tool_path = _gen_cmd("pyright-win.exe")
@@ -249,13 +263,14 @@ class DemoTool(object):
 
         need_envs = ["pyright_stubs_path", "pyright_python_version"]
 
-        print(f"[pyright-check-envs] 检查pyright所需的环境变量是否设置:{','.join(need_envs)} ")
-        
+        print(
+            f"[pyright-check-envs] 检查pyright所需的环境变量是否设置:{','.join(need_envs)} ")
+
         if not pyright_stubs_path:
-            raise Exception("""
-                pyright工具需要提供项目stubs文件所在的目录, 请在环境变量中配置 pyright_stubs_path 的值，
-                例如项目目录下的stubs目录存放所有存根文件，那么请在环境变量中设置 pyright_stubs_path=stubs
-            """)
+            print(
+                f"[pyright-check warning] 没有提供环境变量 pyright_stubs_path 的值，\
+                默认不再检查项目第三方模块的使用类型，如需启用，请设置项目中存根文件夹的路径, 详情可查看工具README.md"
+            )
         self.pyright_stubs_path = pyright_stubs_path
 
         pyright_python_version = os.getenv("pyright_python_version", None)
