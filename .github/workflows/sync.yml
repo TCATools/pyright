@@ -29,4 +29,17 @@ jobs:
         env:
           TGIT_USERNAME: ${{ secrets.TGIT_USERNAME }}
           TGIT_PASSWORD: ${{ secrets.TGIT_PASSWORD }}
+          CNBC_USERNAME: ${{ secrets.CNBC_USERNAME }}
+          CNBC_PASSWORD: ${{ secrets.CNBC_PASSWORD }}
+      - name: Push to CNBC
+        run: |
+          remote_repo="https://${CNBC_USERNAME}:${CNBC_PASSWORD}@cnb.cool/tca/tools/${GITHUB_REPOSITORY##*/}.git"
+          git remote add cnbc "${remote_repo}"
+          git show-ref # debug
+          git branch --verbose
+          git push --all cnbc
+          git push --tags cnbc
+        env:
+          CNBC_USERNAME: ${{ secrets.CNBC_USERNAME }}
+          CNBC_PASSWORD: ${{ secrets.CNBC_PASSWORD }}
  
